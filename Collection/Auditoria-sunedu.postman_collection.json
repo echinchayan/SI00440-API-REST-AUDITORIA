@@ -1,0 +1,264 @@
+{
+	"info": {
+		"_postman_id": "4c85ce1d-4869-4045-8164-deebc3a92bea",
+		"name": "Auditoria-sunedu",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "auditoria",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"\r",
+							"\r",
+							"eval(pm.globals.get('pmlib_code'));\r",
+							"const token = pmlib.jwtSign(pm.collectionVariables.get(\"privateKey\"), { agw: '7S5jNyhThkLbhiq0j0UF91WPJPTa3QOj'}, { alg: 'RS256' }, exp = 55);\r",
+							"\r",
+							"pm.collectionVariables.set(\"token\", token);\r",
+							"\r",
+							"//const verificación = pmlib.jwtVerify(token, pm.collectionVariables.get(\"publicKey\"), alg = 'RS256');\r",
+							"console.log(token);\r",
+							"//console.log(\"verificacion:\" + JSON.stringify(verificación));\r",
+							"\r",
+							"/*\r",
+							"if (data.paramInputCSV != undefined) {\r",
+							"    paramInput = data.paramInputCSV;\r",
+							"    console.log(\"[Iter\" + (pm.info.iteration + 1) + \"] Escenario de Prueba: \" + data.Escenario);\r",
+							"}\r",
+							"//console.log(\"[Iter\" + (pm.info.iteration + 1) + \"] Parámetro de Entrada: \" + paramInput);\r",
+							"var keyApi = pm.collectionVariables.get('key');\r",
+							"pm.collectionVariables.set(\"paramInputEncrypt\", utils.encrypt(paramInput, keyApi));\r",
+							"//console.log(\"paramInputEncrypt: \" + pm.collectionVariables.get(\"paramInputEncrypt\"))\r",
+							"*/\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"user_id\":\"USER_0505\",\r\n    \"entity\":\"NASA\",\r\n    \"ip\":\"5.255.25.145\",\r\n    \"system\":\"AURORA BOLEAR\",\r\n    \"action\":\"Select\",\r\n    \"endpoint\":\"https://agw-transversal-int-qa.minedu.gob.pe/api/v1/auditoria\",\r\n    \"request\":'{\"nombre\":\"Jonh Doe\",\"profesion\":\"Programador\"}',\r\n    \"response\":'{\"nombre\":\"Jonh Doe\",\"profesion\":\"Programador\",\"edad\":25,\"lenguajes\":[\"PHP\",\"Javascript\",\"Dart\"],\"disponibilidadParaViajar\":true,\"rangoProfesional\":{\"aniosDeExperiencia\":12,\"nivel\":\"Senior\"}}'\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://agw-transversal-int-qa.minedu.gob.pe/api/v1/auditoria",
+					"protocol": "https",
+					"host": [
+						"agw-transversal-int-qa",
+						"minedu",
+						"gob",
+						"pe"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auditoria"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"utils = {",
+					"    encrypt: function (plainText, passPhrase) {",
+					"        //Encoding the Salt in from UTF8 to byte array",
+					"        var Salt = CryptoJS.lib.WordArray.random(32);",
+					"        //Creating the Vector Key",
+					"        var Iv = CryptoJS.lib.WordArray.random(16);",
+					"        //Encoding the Password in from UTF8 to byte array",
+					"        var Pass = CryptoJS.enc.Utf8.parse(passPhrase);",
+					"        //Creating the key in PBKDF2 format to be used during the decryption",
+					"        var key256Bits1000Iterations =",
+					"            CryptoJS.PBKDF2(Pass.toString(CryptoJS.enc.Utf8), Salt,",
+					"                //{ keySize: 256 / 32, iterations: 1000 });",
+					"                {",
+					"                    //hasher:CryptoJS.algo.SHA512, ",
+					"                    hasher: CryptoJS.algo.SHA1,",
+					"                    keySize: 256 / 32, iterations: 1000",
+					"                });",
+					"",
+					"        //Decrypting the string contained in cipherParams using the PBKDF2 key",
+					"        var encrypted = CryptoJS.AES.encrypt(plainText,",
+					"            key256Bits1000Iterations, { mode: CryptoJS.mode.CBC, iv: Iv });",
+					"",
+					"        var encryptedText = CryptoJS.enc.Base64.stringify(encrypted.ciphertext); //encrypted.toString(CryptoJS.enc.Utf8);",
+					"        var cipherWithSaltAndIv = CryptoJS.enc.Base64.stringify(Salt) +",
+					"            \":\" +",
+					"            CryptoJS.enc.Base64.stringify(Iv) +",
+					"            \":\" +",
+					"            encryptedText;",
+					"        return cipherWithSaltAndIv;",
+					"    },",
+					"    decrypt: function (encryptedData, passPhrase) {",
+					"        var parts = encryptedData.split(\":\");",
+					"        //encryptedData.split(\":\"); //SALT:IV:CIPHERTEXT",
+					"        //Encoding the Salt in from UTF8 to byte array",
+					"        var Salt = CryptoJS.enc.Base64.parse(parts[0]);",
+					"",
+					"        //Creating the Vector Key",
+					"        var iv = CryptoJS.enc.Base64.parse(parts[1]);",
+					"        //Encoding the Password in from UTF8 to byte array",
+					"        var Pass = CryptoJS.enc.Utf8.parse(passPhrase);",
+					"        //Creating the key in PBKDF2 format to be used during the decryption",
+					"        var Pass = Pass.toString(CryptoJS.enc.Utf8);",
+					"        //hasher:CryptoJS.algo.SHA512,",
+					"        var key256Bits1000Iterations =",
+					"            CryptoJS.PBKDF2(Pass, Salt,",
+					"                {//hasher:CryptoJS.algo.SHA512,",
+					"                    hasher: CryptoJS.algo.SHA1,",
+					"                    keySize: 256 / 32, iterations: 1000",
+					"                });",
+					"        //{hasher:CryptoJS.algo.SHA1, keySize: 256 / 32, iterations: 1000 });",
+					"        //Enclosing the test to be decrypted in a CipherParams object as supported by the CryptoJS libarary",
+					"        var cipherParams = CryptoJS.lib.CipherParams.create({",
+					"            ciphertext: CryptoJS.enc.Base64.parse(parts[2])",
+					"        });",
+					"",
+					"        //Decrypting the string contained in cipherParams using the PBKDF2 key",
+					"        var decrypted = CryptoJS.AES.decrypt(cipherParams,",
+					"            key256Bits1000Iterations, { mode: CryptoJS.mode.CBC, iv: iv, padding: CryptoJS.pad.Pkcs7 });",
+					"        var decryptedText = decrypted.toString(CryptoJS.enc.Utf8);",
+					"",
+					"        return decryptedText;",
+					"    }",
+					"};",
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"utils = {",
+					"    encrypt: function (plainText, passPhrase) {",
+					"        //Encoding the Salt in from UTF8 to byte array",
+					"        var Salt = CryptoJS.lib.WordArray.random(32);",
+					"        //Creating the Vector Key",
+					"        var Iv = CryptoJS.lib.WordArray.random(16);",
+					"        //Encoding the Password in from UTF8 to byte array",
+					"        var Pass = CryptoJS.enc.Utf8.parse(passPhrase);",
+					"        //Creating the key in PBKDF2 format to be used during the decryption",
+					"        var key256Bits1000Iterations =",
+					"            CryptoJS.PBKDF2(Pass.toString(CryptoJS.enc.Utf8), Salt,",
+					"                //{ keySize: 256 / 32, iterations: 1000 });",
+					"                {",
+					"                    //hasher:CryptoJS.algo.SHA512, ",
+					"                    hasher: CryptoJS.algo.SHA1,",
+					"                    keySize: 256 / 32, iterations: 1000",
+					"                });",
+					"",
+					"        //Decrypting the string contained in cipherParams using the PBKDF2 key",
+					"        var encrypted = CryptoJS.AES.encrypt(plainText,",
+					"            key256Bits1000Iterations, { mode: CryptoJS.mode.CBC, iv: Iv });",
+					"",
+					"        var encryptedText = CryptoJS.enc.Base64.stringify(encrypted.ciphertext); //encrypted.toString(CryptoJS.enc.Utf8);",
+					"        var cipherWithSaltAndIv = CryptoJS.enc.Base64.stringify(Salt) +",
+					"            \":\" +",
+					"            CryptoJS.enc.Base64.stringify(Iv) +",
+					"            \":\" +",
+					"            encryptedText;",
+					"        return cipherWithSaltAndIv;",
+					"    },",
+					"    decrypt: function (encryptedData, passPhrase) {",
+					"        var parts = encryptedData.split(\":\");",
+					"        //encryptedData.split(\":\"); //SALT:IV:CIPHERTEXT",
+					"        //Encoding the Salt in from UTF8 to byte array",
+					"        var Salt = CryptoJS.enc.Base64.parse(parts[0]);",
+					"",
+					"        //Creating the Vector Key",
+					"        var iv = CryptoJS.enc.Base64.parse(parts[1]);",
+					"        //Encoding the Password in from UTF8 to byte array",
+					"        var Pass = CryptoJS.enc.Utf8.parse(passPhrase);",
+					"        //Creating the key in PBKDF2 format to be used during the decryption",
+					"        var Pass = Pass.toString(CryptoJS.enc.Utf8);",
+					"        //hasher:CryptoJS.algo.SHA512,",
+					"        var key256Bits1000Iterations =",
+					"            CryptoJS.PBKDF2(Pass, Salt,",
+					"                {//hasher:CryptoJS.algo.SHA512,",
+					"                    hasher: CryptoJS.algo.SHA1,",
+					"                    keySize: 256 / 32, iterations: 1000",
+					"                });",
+					"        //{hasher:CryptoJS.algo.SHA1, keySize: 256 / 32, iterations: 1000 });",
+					"        //Enclosing the test to be decrypted in a CipherParams object as supported by the CryptoJS libarary",
+					"        var cipherParams = CryptoJS.lib.CipherParams.create({",
+					"            ciphertext: CryptoJS.enc.Base64.parse(parts[2])",
+					"        });",
+					"",
+					"        //Decrypting the string contained in cipherParams using the PBKDF2 key",
+					"        var decrypted = CryptoJS.AES.decrypt(cipherParams,",
+					"            key256Bits1000Iterations, { mode: CryptoJS.mode.CBC, iv: iv, padding: CryptoJS.pad.Pkcs7 });",
+					"        var decryptedText = decrypted.toString(CryptoJS.enc.Utf8);",
+					"",
+					"        return decryptedText;",
+					"    }",
+					"};"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "paramInputEncrypt",
+			"value": ""
+		},
+		{
+			"key": "tiempoRespuesta",
+			"value": "200"
+		},
+		{
+			"key": "key",
+			"value": "4165205c97976316AB4643F1FC5BF0DEf3308cB9F689A233D654B2589F094470"
+		},
+		{
+			"key": "token",
+			"value": ""
+		},
+		{
+			"key": "privateKey",
+			"value": "-----BEGIN RSA PRIVATE KEY----- MIIEpAIBAAKCAQEAqNCsme+eFJ+AlCQDKRgnwlkGnTQa/svQJ94ldobyasnl9dh8 WChj91ajpUvOhD+NmxjFiwcO3oNR/bK//SygJIL84XN5/qVzsGPFjvbL9/5OuT23 p8BnVVE1ed/3iY/7ryJGtj8W1ssrDchn1xWNgKvx8eoKhLBrAHzYrTj2DIvuBCk9 gjhr+NFpMy2e6ZTb2R1GMP3b3voNC53q1w5dwEflJvr2jaVijxoxgbLuv31fsRVW sb7AUkhLh4hkTgSP6dya2WOBMn8AOggAcXlvwkhZhAp0rH8OHdfPn0xylviB5Voo valLUdo8+OatKJi4po1ry0o93TQKTVx1AA159wIDAQABAoIBAH3lWcNXYvIIXdCc 5sp/3C7hS8BzOmqovuzsi83QJ/uh5GCq+ViZjqvHrjU4yqPv7YAsQi5DrkAdeUkV RH7gB/ISydqszt8srpFuZsgOn+CrhDQ7pbpyD94duR7R+35YpZ9flZKWjEbVr58Q xPgvd57tHHuISh3Yn4P2l3Tf1QdXHcu1UgGtSeZJ6PG7Mo+rvG+WxpmfolkYekv/ +UJ+HOk4Qsv5btpJGzDLZ7lHkgUExNGcWXJ40d/uBPCRLGx8yp0Z5YG+JGFXN0aX 1K3OHTv/oTPtNhjxaM91wPtf0vWXpFqzwUqnR9sAqO45uno0zPjDvfsXXRxQyeGT ryJSWRkCgYEA8445gte3dO+G2YTrCaIsZAotFcEFGtM1x5/ZGcuNziKl49XipZvW oG/OdZc60WhuxisBh+YH4xJorY6Poo19dnqMjA2M3wGYxlK/GTufbK+IIAmarxEp 7NPJ8pwua2E59G9J5paS0fXPRFLh3AmkIazQgpVbzWCeU3pjmDnSnPUCgYEAsXDS 3WdKRLCNdTc5U4i7plb4KQS8ZgIeldyEc9cUbxTrNDuSSnuG1bkKFIFda8Np4Bdh NmQTp/4KHMnQknS+0FitY0zmonH0ny79i3X4H8wKZDYDK4+MyerXv69NXboB5rJY akMTbEd17F8gU9+uQ/KIOuFP5igb+Zgl6NDtp7sCgYEAgrHvaqcXa0idtFv/REwi Rgyv5NyPQLXWRikg9xakIdm162z7EqNtqOpWgAOHLJg92Vl6mNJ3qQJX6cp2iWQj z1Az23PqBEF3GfWNVp0ID+qhwY9l0kwDk3KTC/2Da1vhHaoangJvBvxBHQjc6pbB 3NA/k9NSUANo8qLajvV4b4ECgYAw+Rq50NBGtRPVzjAcRhjEiCxl5dC5tswKQJqt /ia9oeBowihWNlG4myGVFz9Zhs2p88n44RYrv4m6+FiAk4g2qMLyLT9ahmklpiqE W0LoQ8B6eA3X7/7Dm/WACjooLDZqHb8ZVPn/YJnDa13YyFuolT/UQGt08o0GDmAo KcHuEQKBgQCJaswxErRxMJXZrxFKrdF/nUkoDPuz789F4ce9lYAsjkiYjKkVbG+/ wM1CKb9v2BkScotCYlQZhnWdOX4XKy3pkwA3iCgFX1YyR7Od8Mpox+bG+YXYhYiR nPVJh0uYBEqixABut2rB/ViZEtOLsjFe9fyhn29SxmlF2e63gYwqLw== -----END RSA PRIVATE KEY-----"
+		},
+		{
+			"key": "publicKey",
+			"value": "-----BEGIN PUBLIC KEY-----MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqNCsme+eFJ+AlCQDKRgnwlkGnTQa/svQJ94ldobyasnl9dh8WChj91ajpUvOhD+NmxjFiwcO3oNR/bK//SygJIL84XN5/qVzsGPFjvbL9/5OuT23p8BnVVE1ed/3iY/7ryJGtj8W1ssrDchn1xWNgKvx8eoKhLBrAHzYrTj2DIvuBCk9gjhr+NFpMy2e6ZTb2R1GMP3b3voNC53q1w5dwEflJvr2jaVijxoxgbLuv31fsRVWsb7AUkhLh4hkTgSP6dya2WOBMn8AOggAcXlvwkhZhAp0rH8OHdfPn0xylviB5VoovalLUdo8+OatKJi4po1ry0o93TQKTVx1AA159wIDAQAB-----END PUBLIC KEY-----"
+		}
+	]
+}

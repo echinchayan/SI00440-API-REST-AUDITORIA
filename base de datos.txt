@@ -1,0 +1,8 @@
+Gestor BD: MongoDB Compass
+
+hostname: 10.200.9.19
+port: 27017
+username: user_ucsi
+password: user_ucsi2020
+
+Nombre BD: AuditoriaAPIDB
